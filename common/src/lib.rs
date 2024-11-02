@@ -1,4 +1,5 @@
 use std::{
+    fs::{read_to_string, File},
     io::{Read, Write},
     net::{TcpListener, TcpStream},
 };
@@ -41,7 +42,18 @@ pub fn handle_response(mut stream: TcpStream) -> String {
 }
 
 pub fn write_to_file(msg: &str, name: &str) {
-    let mut output = msg.chars();
-    output.next();
-    println!("{} writing {}", name, output.as_str());
+    let mut data = read_to_string(format!("data/{}.csv", name))
+        .unwrap_or_default()
+        .lines()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+    data.push(msg[1..].to_string());
+    Write::write_all(
+        &mut File::create(format!("data/{}.csv", name)).unwrap_or_else(|_| panic!()),
+        data.into_iter()
+            .map(|s| format!("{}\n", s))
+            .collect::<String>()
+            .as_bytes(),
+    )
+    .unwrap_or_default();
 }
